@@ -82,6 +82,7 @@ main(int argc, char *argv[])
 	XSyncSystemCounter *counters;
 	int sync_event, error;
 	int major, minor, ncounters;
+	int current_device;
 
 	struct mod_lookup {
 		char *name;
@@ -184,6 +185,8 @@ main(int argc, char *argv[])
 			errx(1, "no idle counter");
 	}
 
+	current_device = -1;
+	system("gsettings set org.gnome.desktop.interface cursor-theme Hackneyed &");
 	for (;;) {
 		cookie = &e.xcookie;
 		XNextEvent(dpy, &e);
@@ -260,6 +263,15 @@ main(int argc, char *argv[])
 			/* xi2 raw event */
 			XGetEventData(dpy, cookie);
 			XIDeviceEvent *xie = (XIDeviceEvent *)cookie->data;
+			if (current_device != xie->sourceid) {
+				current_device = xie->sourceid;
+				if (current_device == 10) {
+					system("gsettings set org.gnome.desktop.interface cursor-theme Dot-Dark &");
+				};
+				if (current_device != 10) {
+					system("gsettings set org.gnome.desktop.interface cursor-theme Hackneyed &");
+				}
+			}
 
 			switch (xie->evtype) {
 			case XI_RawMotion:
