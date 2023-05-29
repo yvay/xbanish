@@ -1,3 +1,32 @@
+DISCLAIMER: I have no idea what I'm doing. I'm not a C coder. Don't run this
+unless you're one and think the changes are acceptable.
+
+This ugly hack lets me run a shell command when the input device changes.
+
+`xbanish -x <device_id> -c "<command>"`
+
+I run it like this:
+
+```
+xbanish -t 1 \
+-x 10 -c "gsettings set org.gnome.desktop.interface cursor-theme Dot-Dark &" \
+-x 17 -c "gsettings set org.gnome.desktop.interface cursor-theme Dot-Dark &" \
+-x  0 -c "gsettings set org.gnome.desktop.interface cursor-theme Hackneyed &"
+```
+
+This changes the GNOME cursor to a circle when I'm using the stylus (device ids
+`10` and `17` according to `xinput list`) and changes it back to the standard
+arrow cursor when I'm not (device id `0` is a catch all for all other devices.)
+
+Using both devices at the same time is a convenient way to check the CPU fan is
+not broken.
+
+In addition to the original features of xbanish it conveniently hides the
+cursor on finger events. Credit for this and other features belong to the
+original authors.
+
+# Original readme
+
 ## xbanish
 
 xbanish hides the mouse cursor when you start typing, and shows it again when
