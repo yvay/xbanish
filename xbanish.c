@@ -59,6 +59,9 @@ static XSyncAlarm idle_alarm = None;
 static int debug = 0;
 #define DPRINTF(x) { if (debug) { printf x; } };
 
+#define MAX_COMMAND_LENGTH 512
+#define MAX_XINPUT_DEVICE 64
+
 static int move = 0, move_x, move_y, move_custom_x, move_custom_y, move_custom_mask;
 enum move_types {
 	MOVE_NW = 1,
@@ -95,7 +98,12 @@ main(int argc, char *argv[])
 		{"all", -1},
 	};
 
-	while ((ch = getopt(argc, argv, "adki:m:t:s")) != -1)
+	int xinput_device = -1;
+	int n_commands = 0;
+	int devices[MAX_XINPUT_DEVICE] = {0};
+	char device_command[MAX_XINPUT_DEVICE][MAX_COMMAND_LENGTH] = {0};
+
+	while ((ch = getopt(argc, argv, "adki:m:t:sx:c:")) != -1)
 		switch (ch) {
 		case 'a':
 			always_hide = 1;
@@ -142,6 +150,32 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			ignore_scroll = 1;
+			break;
+		case 'x':
+			if (xinput_device >= 0) {
+				warnx("invalid '-x' argument");
+				usage(argv[0]);
+			}
+			xinput_device = strtol(optarg, NULL, 0);
+			if (xinput_device > MAX_XINPUT_DEVICE) {
+				warnx("invalid '-x' argument");
+				usage(argv[0]);
+			}
+			break;
+		case 'c':
+			if (xinput_device < 0) {
+				warnx("invalid '-c' argument");
+				usage(argv[0]);
+				exit(1);
+			}
+			if (strlen(optarg) > MAX_COMMAND_LENGTH - 1) {
+				warnx("'-c' argument is too long.\n");
+				exit(1);
+			}
+			strcpy(device_command[xinput_device], optarg);
+			devices[n_commands] = xinput_device;
+			n_commands += 1;
+			xinput_device = -1;
 			break;
 		default:
 			usage(argv[0]);
@@ -265,11 +299,16 @@ main(int argc, char *argv[])
 			XIDeviceEvent *xie = (XIDeviceEvent *)cookie->data;
 			if (current_device != xie->sourceid) {
 				current_device = xie->sourceid;
-				if (current_device == 10) {
-					system("gsettings set org.gnome.desktop.interface cursor-theme Dot-Dark &");
-				};
-				if (current_device != 10) {
-					system("gsettings set org.gnome.desktop.interface cursor-theme Hackneyed &");
+				int i = 0;
+				while (i < n_commands) {
+					if (current_device == devices[i]) {
+						system(device_command[devices[i]]);
+						break;
+					}
+					i += 1;
+				}
+				if (i == n_commands) {
+					system(device_command[0]);
 				}
 			}
 
